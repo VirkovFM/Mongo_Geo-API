@@ -53,4 +53,14 @@ const updateUserLocation = (req, res) => {
     });
 }
 
-module.exports = { findAllUsers, findById, addUser, updateUserLocation };
+const findByUsername = (req, res) => {
+    console.log(req.params.username);
+    User.find({username:req.params.username}).then((user) => {
+        res.status(200).json(user);
+    },
+    err => {
+        err && res.status(500).send(err.message);
+    });
+};
+
+module.exports = { findAllUsers, findById, addUser, updateUserLocation, findByUsername };
