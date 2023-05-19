@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const User = require('../models/user');
+const user = require('../models/user');
 
 const findAllUsers = (req, res) => {
     User.find().then((users) => {               //la palabra then es una promesa
@@ -12,6 +13,33 @@ const findAllUsers = (req, res) => {
     });
 };
 
+const findAllGeoUsers = (req, res) => {
+    User.find().then(
+      (users) => {
+        console.log("Users FindAll GeuUsers Sucess");
+        var geousers = { type: "FeatureCollection", features: [] };
+        users.map((item) => {
+          geousers.features.push({
+            type: "Feature",
+            geometry: {
+              type: "Point",
+              coordinates: [item.latestLongitude, item.latestLatitude],
+            },
+            properties: {
+              name: item.name,
+              username: item.username,
+            },
+            id: item._id,
+          });
+        });
+        res.status(200).json(geousers);
+      },
+      (err) => {
+        console.log("Users FindAll GeoUsers Error");
+        err && res.status(500).send(err.message);
+      }
+    );
+  };
 
 const findById = (req, res) => {
     console.log(req.params);
@@ -43,9 +71,14 @@ const addUser = (req, res) => {
 
 const updateUserLocation = (req, res) => {
     console.log(req.body);
-    User.updateOne({_id:req.body.id}, 
-    {latestLaltitude:req.body.latestLaltitude, 
-        latestLongitude: req.body.latestLongitude}).then((usr) =>{
+    const key = Object.keys(req.body)[0];
+    console.log(key);//
+    const parsedKey = JSON.parse(key);
+    console.log(parsedKey);//
+    
+    User.updateOne({_id:parsedKey.id}, 
+        {latestLaltitude:parsedKey.latestLaltitude, 
+            latestLongitude: parsedKey.latestLongitude}).then((usr) =>{
             res.status(200).json(usr);
         },
         err => {
@@ -63,4 +96,36 @@ const findByUsername = (req, res) => {
     });
 };
 
-module.exports = { findAllUsers, findById, addUser, updateUserLocation, findByUsername };
+//para PMAP05
+const removeById = (req, res) => {
+    console.log(req.params);
+    User.findByIdAndDelete(req.params.id).then((user) => {
+        res.status(200).json(user);
+    },
+    err => {
+        err && res.status(500).send(err.message);
+    });
+};
+
+const updUserLocation = (req, res) => {
+    console.log(req.body);
+    User.updateOne({_id:req.body.id}, 
+        {latestLaltitude:req.body.latestLaltitude, 
+            latestLongitude: req.body.latestLongitude}).then((usr) =>{
+            res.status(200).json(usr);
+        },
+        err => {
+            err && res.status(500).send(err.message);
+    });
+}
+
+module.exports = {
+    findAllUsers,
+    findById,
+    addUser,
+    updateUserLocation,
+    findByUsername,
+    removeById,
+    updUserLocation,
+    findAllGeoUsers
+};
